@@ -1,7 +1,9 @@
 from airflow.sdk import dag, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.sdk.bases.sensor import PokeReturnValue
+
 import requests
+import csv
 
 @dag
 def user_processing():
@@ -45,7 +47,17 @@ def user_processing():
             "email": fake_user["personalInfo"]["email"]
         }
     
+    @task
+    def process_user(user_info):
+        file_name = "/tmp/user_info.csv"
+        with open(file_name, "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writeheader(user_info.keys())  
+            writer.writerows(user_info.values())
+    
     fake_user = is_api_available()
     user_info = extract_user(fake_user)
+    process_user(user_info)
+
 
 user_processing()
